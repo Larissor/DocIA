@@ -1,0 +1,37 @@
+# Framework para criar a API REST do DocIA
+fastapi
+
+# Servidor que executa a API FastAPI
+# [standard] inclui recursos adicionais, como recarga automática durante o desenvolvimento
+uvicorn[standard]
+
+# Gerencia as configurações da aplicação por variáveis de ambiente
+# Exemplo: configuração do endereço do Ollama e dos modelos de IA
+pydantic-settings
+
+# Permite receber arquivos enviados pela API, como PDFs
+python-multipart
+
+# Realiza requisições HTTP para outros serviços
+# Será usado para se comunicar com o Ollama e testar endpoints da API
+httpx
+
+# Extrai texto de arquivos PDF para que a IA possa analisá-los
+pymupdf
+
+# Banco de dados vetorial para armazenar embeddings e encontrar
+# trechos de documentos semanticamente relacionados à pergunta do usuário
+chromadb
+
+# Cria a interface web interativa do DocIA
+streamlit
+
+# Executa testes automatizados para verificar se o código funciona corretamente
+pytest
+
+# Mede a cobertura dos testes, mostrando quais partes do código foram testadas
+pytest-cov
+
+# Analisa a qualidade do código Python e identifica possíveis problemas
+# Também pode formatar o código automaticamente
+ruff

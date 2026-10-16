@@ -1,0 +1,59 @@
+
+# =========================
+# VARIÁVEIS E INFORMAÇÕES SENSÍVEIS
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+env/
+
+# =========================
+# TESTES E QUALIDADE
+# =========================
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =========================
+# DOCUMENTOS E ARQUIVOS PRIVADOS
+# =========================
+uploads/
+data/
+documents/
+*.pdf
+*.docx
+*.xlsx
+
+# =========================
+# BANCO DE DADOS E VETORES LOCAIS
+# =========================
+chroma/
+chroma_db/
+vector_db/
+*.sqlite
+*.sqlite3
+*.db
+
+# =========================
+# LOGS
+# =========================
+*.log
+logs/
+
+# =========================
+# EDITORES E SISTEMA
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
