@@ -8,4 +8,4 @@ app = FastAPI(
 
 @app.get("/healt")
 def health():
-    return{"status":  "ok"}
+    return {"status": "ok"}

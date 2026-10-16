@@ -1,10 +1,20 @@
 
+import os
+
 import httpx
 
 
-OLLAMA_URL = "http://localhost:11434"
-EMBEDDING_MODEL = "nomic-embed-text"
-TOP_K = 4
+OLLAMA_URL = os.getenv(
+    "OLLAMA_BASE_URL",
+    "http://localhost:11434",
+).rstrip("/")
+
+EMBEDDING_MODEL = os.getenv(
+    "EMBEDDING_MODEL",
+    "nomic-embed-text",
+)
+
+TOP_K = int(os.getenv("TOP_K", "4"))
 
 
 def create_query_embedding(question: str) -> list[float]:
@@ -23,18 +33,29 @@ def create_query_embedding(question: str) -> list[float]:
             timeout=60.0,
         )
         response.raise_for_status()
+        data = response.json()
 
     except httpx.HTTPError as error:
         raise RuntimeError(
             "Não foi possível gerar o embedding. "
-            "Verifique se o Ollama está em execução."
+            "Verifique a conexão com o Ollama e o modelo configurado."
         ) from error
 
-    data = response.json()
+    except ValueError as error:
+        raise RuntimeError(
+            "O Ollama retornou uma resposta JSON inválida."
+        ) from error
+
     embeddings = data.get("embeddings", [])
 
-    if not embeddings or not embeddings[0]:
-        raise RuntimeError("O Ollama não retornou um embedding válido.")
+    if (
+        not embeddings
+        or not isinstance(embeddings[0], list)
+        or not embeddings[0]
+    ):
+        raise RuntimeError(
+            "O Ollama não retornou um embedding válido."
+        )
 
     return embeddings[0]
 
@@ -44,58 +65,49 @@ def retrieve_chunks(
     collection,
     top_k: int = TOP_K,
 ) -> list[dict]:
-    """
-    Busca os chunks mais relevantes para uma pergunta.
-
-    collection: coleção do ChromaDB que contém os chunks
-    top_k: quantidade máxima de resultados
-    """
+    """Recupera os chunks mais relevantes para uma pergunta."""
 
     if not question or not question.strip():
         raise ValueError("A pergunta não pode estar vazia.")
 
-    if top_k < 1:
-        raise ValueError("top_k deve ser maior que zero.")
+    if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k < 1:
+        raise ValueError("top_k deve ser um inteiro maior que zero.")
 
-    # Evita consultar uma coleção sem documentos
-    if collection.count() == 0:
+    total_chunks = collection.count()
+
+    if total_chunks == 0:
         return []
 
-    # 1. Transforma a pergunta em embedding
     query_embedding = create_query_embedding(question)
 
-    # 2. Busca os chunks semanticamente mais próximos
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=min(top_k, collection.count()),
+        n_results=min(top_k, total_chunks),
         include=["documents", "metadatas", "distances"],
     )
-
-    # 3. Organiza os resultados em uma lista
-    chunks = []
 
     ids = results.get("ids", [[]])[0]
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
     distances = results.get("distances", [[]])[0]
 
+    chunks = []
+
     for chunk_id, text, metadata, distance in zip(
         ids, documents, metadatas, distances
     ):
-        if not text:
+        if not text or not text.strip():
             continue
 
         metadata = metadata or {}
 
-        chunks.append(
-            {
-                "chunk_id": chunk_id,
-                "document_id": metadata.get("document_id"),
-                "filename": metadata.get("filename"),
-                "page": metadata.get("page"),
-                "text": text,
-                "distance": distance,
-            }
-        )
+        chunks.append({
+            "chunk_id": chunk_id,
+            "document_id": metadata.get("document_id"),
+            "filename": metadata.get("filename"),
+            "page": metadata.get("page"),
+            "text": text,
+            "distance": distance,
+        })
 
     return chunks
